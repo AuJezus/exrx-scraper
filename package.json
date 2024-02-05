@@ -1,0 +1,17 @@
+{
+  "type": "module",
+  "name": "exrx-scrape",
+  "version": "1.0.0",
+  "description": "A simple exrx.net excersize data scraper",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "author": "aujezus",
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cheerio": "^1.0.0-rc.12",
+    "cli-progress": "^3.12.0"
+  }
+}
