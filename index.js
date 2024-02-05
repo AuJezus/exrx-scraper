@@ -36,10 +36,10 @@ async function getMuscleGroupLinks() {
   return muscleGroupLinks;
 }
 
-// Get all of the available excersizes from each muscle group
-let totalExcersizes = 0;
-async function getMuscleGroupExcersizeLinks(muscleGroupLinks) {
-  const excersizeLinks = await Promise.all(
+// Get all of the available exersices from each muscle group
+let totalExersices = 0;
+async function getMuscleGroupExersiceLinks(muscleGroupLinks) {
+  const exersiceLinks = await Promise.all(
     muscleGroupLinks.map(async (link) => {
       const $ = await getCheerioDom(link);
 
@@ -47,22 +47,22 @@ async function getMuscleGroupExcersizeLinks(muscleGroupLinks) {
       const pageTitle = $("h1.page-title").text();
       const muscleGroup = pageTitle.slice(0, pageTitle.lastIndexOf(" "));
 
-      // Get excersize elements
+      // Get exersice elements
       const muscleNames = $(".container h2")
         .map((i, e) => $(e).text())
         .toArray();
-      const excersizeSections = $("article .container:has(ul)"); //li:not(.premium) a
+      const exersiceSections = $("article .container:has(ul)"); //li:not(.premium) a
 
       // Convert data to nicely formatted object
-      const musclesWithExcersizes = excersizeSections
+      const musclesWithExersices = exersiceSections
         .map((i, e) => {
-          // Get all excersize <a> elements that are free
+          // Get all exersice <a> elements that are free
           const anchors = $(e).find("li:not(.premium) > a");
           const links = anchors
             .map((i, a) => {
               const href = $(a).attr("href");
 
-              // Filter non excersizes
+              // Filter non exersices
               if (!href.startsWith("../") && !href.startsWith("https://"))
                 return null;
 
@@ -80,24 +80,24 @@ async function getMuscleGroupExcersizeLinks(muscleGroupLinks) {
             })
             .toArray();
 
-          totalExcersizes += links.length;
-          return { name: muscleNames[i], excersizes: links };
+          totalExersices += links.length;
+          return { name: muscleNames[i], exersices: links };
         })
         .toArray();
 
       return {
         muscleGroup,
-        muscles: musclesWithExcersizes,
+        muscles: musclesWithExersices,
       };
     })
   );
 
-  return excersizeLinks;
+  return exersiceLinks;
 }
 
-// Get excersize data
-async function getExcersizeData(excersizeLink) {
-  const $ = await getCheerioDom(excersizeLink);
+// Get exersice data
+async function getExersiceData(exersiceLink) {
+  const $ = await getCheerioDom(exersiceLink);
 
   // Get name
   const name = $("h1.page-title").text();
@@ -123,20 +123,20 @@ async function getExcersizeData(excersizeLink) {
   };
 }
 
-// Get all of the excersizes data in sequence (doing it in parallel will crash the website)
-async function getExcersizesData(excersizeLinks) {
-  for (const [gI, muscleGroup] of excersizeLinks.entries()) {
+// Get all of the exersices data in sequence (doing it in parallel will crash the website)
+async function getExersicesData(exersiceLinks) {
+  for (const [gI, muscleGroup] of exersiceLinks.entries()) {
     for (const [mI, muscle] of muscleGroup.muscles.entries()) {
-      for (const [eI, excersize] of muscle.excersizes.entries()) {
-        excersizeLinks[gI].muscles[mI].excersizes[eI] = await getExcersizeData(
-          excersize
+      for (const [eI, exersice] of muscle.exersices.entries()) {
+        exersiceLinks[gI].muscles[mI].exersices[eI] = await getExersiceData(
+          exersice
         );
         progressBar.increment();
       }
     }
   }
 
-  return excersizeLinks;
+  return exersiceLinks;
 }
 
 // 1) Getting the muscle group link array
@@ -145,37 +145,35 @@ console.log(
   chalk.yellow(
     `Found ${chalk.green(
       muscleGroupLinks.length
-    )} muscle groups, getting excersize links...`
+    )} muscle groups, getting exersice links...`
   )
 );
 
-// 2) For each muscle group scrape all available excersizes links and format/filter it by individual muscle.
-const excersizeLinks = await getMuscleGroupExcersizeLinks(muscleGroupLinks);
+// 2) For each muscle group scrape all available exersices links and format/filter it by individual muscle.
+const exersiceLinks = await getMuscleGroupExersiceLinks(muscleGroupLinks);
 
 console.log(
-  chalk.yellow(
-    `Total of ${chalk.green(totalExcersizes)} free excersizes found.`
-  )
+  chalk.yellow(`Total of ${chalk.green(totalExersices)} free exersices found.`)
 );
 
 const progressBar = new cliProgress.SingleBar(
   {
     format: chalk.cyan(
-      `Scraping excersize data | ${chalk.magenta(
+      `Scraping exersice data | ${chalk.magenta(
         "{bar} {percentage}%"
       )} | ${chalk.yellow("ETA: {eta}s")} | ${chalk.red("{value}/{total}")}`
     ),
   },
   cliProgress.Presets.shades_classic
 );
-progressBar.start(totalExcersizes, 0);
+progressBar.start(totalExersices, 0);
 
-// 3) Scrape data from all of the excersize links in sequence
-const excersizes = await getExcersizesData(excersizeLinks);
+// 3) Scrape data from all of the exersice links in sequence
+const exersices = await getExersicesData(exersiceLinks);
 progressBar.stop();
 
 // 4) Save to file
 console.log(chalk.yellow("Saving data to json file..."));
-const jsonString = JSON.stringify(excersizes);
+const jsonString = JSON.stringify(exersices);
 fs.writeFile("data.json", jsonString, (err) => {});
 console.log(chalk.green("Done!"));
